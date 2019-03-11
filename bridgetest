@@ -43,6 +43,22 @@ def start_tcpdump(basename, addr):
         stderr=open(basename + ".tcpdump.err", "w"))
     return p
 
+def download_file():
+    logging.info("Attempting to download large file")
+    
+    try:
+        start = time.time()
+        subprocess.check_call(["/usr/bin/torsocks", "wget", "-O", "/dev/null", "http://mirror.cs.uwaterloo.ca/raspbian/images/apc_apricot_r1.zip"])
+        stop = time.time()
+        download_time = stop - start
+    except subprocess.CalledProcessError as e:
+        logging.info("failed to download file: %s", e)
+        download_time = -1
+
+    finally:
+        return download_time
+
+
 def start_tor(tor_config):
     assert "DataDirectory" in tor_config
 
@@ -133,6 +149,13 @@ with open(bridge_lines_file) as f:
             except OSError as err:
                 logging.info("failed to start tor: %s" % err)
                 continue
+
+            #Now try a large file download
+            download_time = download_file()
+            f = open(os.path.join(".", "%s.log" % nickname), 'a')
+            f.write("Downloaded " + str(download_time) + "s\n")
+            f.close()
+
             tor_proc.terminate()
             tor_proc.wait()
         finally:

@@ -12,29 +12,43 @@ locale.setlocale(locale.LC_ALL, "C")
 
 # Dec 01 20:57:53.000 [notice] Bootstrapped 0%: Starting
 bootstrapped_re = re.compile(r'^(\w+ \d+ \d\d:\d\d:\d\d\.\d\d\d) \[\w+\] Bootstrapped (\d+)%')
+bandwidth_re = re.compile(r'^Downloaded (-?\d+.\d+)s')
 
 csvW = csv.DictWriter(sys.stdout, fieldnames=("timestamp", "site", "runid", "nickname", "percent"))
 csvW.writeheader()
 
+csvE = csv.DictWriter(sys.stderr, fieldnames=("site", "runid", "nickname", "download"))
+csvE.writeheader()
+
 def process_log(f, site, runid, nickname):
     for line in f:
         m = bootstrapped_re.match(line)
-        if m is None:
-            continue
+        n = bandwidth_re.match(line)
+        if m is not None:
 
-        timestamp = datetime.datetime.strptime(m.group(1), "%b %d %H:%M:%S.%f")
-        # tor logs don't contain the year, so grab it from the runid.
-        timestamp = timestamp.replace(year=int(runid[:4]))
-        percent = m.group(2)
+            timestamp = datetime.datetime.strptime(m.group(1), "%b %d %H:%M:%S.%f")
+            # tor logs don't contain the year, so grab it from the runid.
+            timestamp = timestamp.replace(year=int(runid[:4]))
+            percent = m.group(2)
 
-        row = {
-            "timestamp": timestamp.strftime("%Y-%m-%d %H:%M:%S.%f"),
-            "site": site,
-            "runid": runid,
-            "nickname": nickname,
-            "percent": percent,
-        }
-        csvW.writerow(row)
+            row = {
+                "timestamp": timestamp.strftime("%Y-%m-%d %H:%M:%S.%f"),
+                "site": site,
+                "runid": runid,
+                "nickname": nickname,
+                "percent": percent,
+            }
+            csvW.writerow(row)
+        elif n is not None:
+            download_time = n.group(1)
+            row = {
+                "site": site,
+                "runid": runid,
+                "nickname": nickname,
+                "download": download_time,
+            }
+            csvE.writerow(row)
+
 
 for filename in sys.stdin:
     filename = filename.strip()

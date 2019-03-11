@@ -10,7 +10,7 @@ Add to crontab to run hourly tests:
 	0 */1 * * * cd ~/kz && ./bridgetest.sh [SITENAME]
 
 Generate a CSV file from logs:
-	find log -name '*.log' | sort | ./makecsv > bridgetest.csv
+	find log -name '*.log' | sort | ./makecsv > bridgetest.csv 2> bandwidth.csv
 
 Make a graph:
 	Rscript graph.R bridgetest.csv
