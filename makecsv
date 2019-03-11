@@ -1,0 +1,55 @@
+#!/usr/bin/env python2
+
+import csv
+import datetime
+import locale
+import os.path
+import re
+import sys
+
+# For strptime.
+locale.setlocale(locale.LC_ALL, "C")
+
+# Dec 01 20:57:53.000 [notice] Bootstrapped 0%: Starting
+bootstrapped_re = re.compile(r'^(\w+ \d+ \d\d:\d\d:\d\d\.\d\d\d) \[\w+\] Bootstrapped (\d+)%')
+
+csvW = csv.DictWriter(sys.stdout, fieldnames=("timestamp", "site", "runid", "nickname", "percent"))
+csvW.writeheader()
+
+def process_log(f, site, runid, nickname):
+    for line in f:
+        m = bootstrapped_re.match(line)
+        if m is None:
+            continue
+
+        timestamp = datetime.datetime.strptime(m.group(1), "%b %d %H:%M:%S.%f")
+        # tor logs don't contain the year, so grab it from the runid.
+        timestamp = timestamp.replace(year=int(runid[:4]))
+        percent = m.group(2)
+
+        row = {
+            "timestamp": timestamp.strftime("%Y-%m-%d %H:%M:%S.%f"),
+            "site": site,
+            "runid": runid,
+            "nickname": nickname,
+            "percent": percent,
+        }
+        csvW.writerow(row)
+
+for filename in sys.stdin:
+    filename = filename.strip()
+
+    nickname, ext = os.path.splitext(os.path.basename(filename))
+
+    if ext != ".log":
+        continue
+    if nickname == "main":
+        continue
+
+    parent = os.path.dirname(filename)
+    runid = os.path.basename(parent)
+    parent = os.path.dirname(parent)
+    site = os.path.basename(parent)
+
+    with open(filename) as f:
+        process_log(f, site, runid, nickname)

@@ -1,0 +1,137 @@
+#!/usr/bin/env python2
+
+import errno
+import logging
+import os
+import re
+import shutil
+import subprocess
+import tempfile
+import time
+
+import stem.process
+
+BRIDGE_LINES = (
+)
+
+START_TOR_TIMEOUT = 3 * 60
+CIRCUIT_BUILD_TIMEOUT = 60
+OBFS4PROXY_PATH = "/usr/bin/obfs4proxy"
+
+def makedirs(path):
+    try:
+        return os.makedirs(path)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+
+def get_address_from_bridge_line(bridge_line):
+    host, port = bridge_line.split()[1].split(":", 1)
+    port = int(port)
+    return (host, port)
+
+def start_tcpdump(basename, addr):
+    bpf = "(src host %(host)s and src port %(port)d) or (dst host %(host)s and dst port %(port)d)" % {"host": addr[0], "port": addr[1]}
+    # http://packetlife.net/blog/2010/mar/19/sniffing-wireshark-non-root-user/
+    # groupadd tcpdump
+    # usermod -a -G tcpdump user
+    # chgrp tcpdump /usr/sbin/tcpdump
+    # setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
+    p = subprocess.Popen(["/usr/sbin/tcpdump", "-i", "tun0", "-U", "-B", "4096", "-c", "100", "-w", basename + ".pcap", bpf],
+        stdout=open(basename + ".tcpdump.out", "w"),
+        stderr=open(basename + ".tcpdump.err", "w"))
+    return p
+
+def start_tor(tor_config):
+    assert "DataDirectory" in tor_config
+
+    config = {
+        "SOCKSPort": "auto",
+        "ControlPort": "auto",
+        "CookieAuthentication": "1",
+        "LearnCircuitBuildTimeout": "0",
+        "CircuitBuildTimeout": str(CIRCUIT_BUILD_TIMEOUT),
+        "FetchHidServDescriptors": "0",
+        "ClientTransportPlugin": "obfs4 exec %s" % OBFS4PROXY_PATH,
+        "LogTimeGranularity": "1",
+        "Log": "notice stdout",
+    }
+    config.update(tor_config)
+
+    class Ports(object):
+        socks = None
+        control = None
+    ports = Ports()
+    socks_re = re.compile(r'\bSocks listener listening on port ([0-9]+)\.')
+    control_re = re.compile(r'\bControl listener listening on port ([0-9]+)\.')
+    def init_msg_handler(line):
+        logging.info("tor: %s" % line.encode("unicode_escape"))
+        m = socks_re.search(line)
+        if m is not None:
+            assert ports.socks is None
+            ports.socks = int(m.group(1))
+        m = control_re.search(line)
+        if m is not None:
+            assert ports.control is None
+            ports.control = int(m.group(1))
+
+    logging.info("starting tor with configuration %r" % config)
+
+    proc = stem.process.launch_tor_with_config(
+        config,
+        timeout=START_TOR_TIMEOUT,
+        take_ownership=True,
+        init_msg_handler=init_msg_handler,
+    )
+
+    assert ports.socks is not None
+    assert ports.control is not None
+
+    return proc, ports.socks, ports.control
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s.%(msecs)03d %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logging.Formatter.converter = time.gmtime
+
+# Set timezone to be inherited by tor processes.
+os.environ["TZ"] = "UTC"
+time.tzset()
+
+logging.info("starting")
+
+for nickname, bridge_line in BRIDGE_LINES:
+    datadir = tempfile.mkdtemp(prefix="datadir.", dir=".")
+    logging.info("created temporary DataDirectory %r", datadir)
+    tcpdump_proc = None
+    try:
+        logging.info("starting tcpdump for bridge %r" % nickname)
+        addr = get_address_from_bridge_line(bridge_line)
+        try:
+            tcpdump_proc = start_tcpdump(nickname, addr)
+        except OSError as e:
+            logging.info("failed to start tcpdump: %s", e)
+            # Carry on regardless.
+
+        logging.info("starting tor for bridge %r" % nickname)
+        logging.info("Bridge %s" % bridge_line)
+        tor_config = {
+            "DataDirectory": datadir,
+            "Log": "notice file %s" % os.path.join(".", "%s.log" % nickname),
+            "UseBridges": "1",
+            "Bridge": bridge_line,
+        }
+        try:
+            tor_proc, _, _ = start_tor(tor_config)
+        except OSError as err:
+            logging.info("failed to start tor: %s" % err)
+            continue
+        tor_proc.terminate()
+        tor_proc.wait()
+    finally:
+        logging.info("deleting temporary DataDirectory %r", datadir)
+        shutil.rmtree(datadir)
+        if tcpdump_proc is not None:
+            tcpdump_proc.terminate()
