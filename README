@@ -1,6 +1,11 @@
 [SITENAME] is an arbitrary identifier for the probe site
 that you have to choose.
 
+The bridge_lines.txt file should contain a list of bridges to test. Each line corresponds to a bridge and should be of the form:
+        <nickname>,<bridge_line>
+where <bridge_line> is the line to go in the torrc file and is structured as follows:
+        obfs4 <IP:Port> <FINGERPRINT> cert=<CERT> iat-mode=0
+
 Add to crontab to run hourly tests:
 	0 */1 * * * cd ~/kz && ./bridgetest.sh [SITENAME]
 
