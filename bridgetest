@@ -43,12 +43,12 @@ def start_tcpdump(basename, addr):
         stderr=open(basename + ".tcpdump.err", "w"))
     return p
 
-def download_file():
+def download_file(socks_port):
     logging.info("Attempting to download large file")
     
     try:
         start = time.time()
-        subprocess.check_call(["/usr/bin/torsocks", "wget", "-O", "/dev/null", "http://mirror.cs.uwaterloo.ca/raspbian/images/apc_apricot_r1.zip"])
+        subprocess.check_call(["/usr/bin/torsocks", "-P", str(socks_port), "wget", "-O", "/dev/null", "http://mirror.cs.uwaterloo.ca/raspbian/images/apc_apricot_r1.zip"])
         stop = time.time()
         download_time = stop - start
     except subprocess.CalledProcessError as e:
@@ -127,6 +127,7 @@ with open(bridge_lines_file) as f:
         datadir = tempfile.mkdtemp(prefix="datadir.", dir=".")
         logging.info("created temporary DataDirectory %r", datadir)
         tcpdump_proc = None
+        socks_port = 0
         try:
             logging.info("starting tcpdump for bridge %r" % nickname)
             addr = get_address_from_bridge_line(bridge_line)
@@ -145,13 +146,13 @@ with open(bridge_lines_file) as f:
                     "Bridge": bridge_line,
                     }
             try:
-                tor_proc, _, _ = start_tor(tor_config)
+                tor_proc, socks_port, _ = start_tor(tor_config)
             except OSError as err:
                 logging.info("failed to start tor: %s" % err)
                 continue
 
             #Now try a large file download
-            download_time = download_file()
+            download_time = download_file(socks_port)
             f = open(os.path.join(".", "%s.log" % nickname), 'a')
             f.write("Downloaded " + str(download_time) + "s\n")
             f.close()
