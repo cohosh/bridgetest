@@ -1,3 +1,11 @@
+Prerequesites:
+#Python 2.7 and related packages
+apt install python python-pip
+pip install stem
+
+#obfs4 and tor
+apt install obfs4proxy tor torsocks
+
 [SITENAME] is an arbitrary identifier for the probe site
 that you have to choose.
 
@@ -6,8 +14,8 @@ The bridge_lines.txt file should contain a list of bridges to test. Each line co
 where <bridge_line> is the line to go in the torrc file and is structured as follows:
         obfs4 <IP:Port> <FINGERPRINT> cert=<CERT> iat-mode=0
 
-Add to crontab to run hourly tests:
-	0 */1 * * * cd ~/kz && ./bridgetest.sh [SITENAME]
+Add to crontab to run tests 4x a day:
+	0 */6 * * * cd ~/bridgetest && ./bridgetest.sh [SITENAME]
 
 Generate a CSV file from logs:
 	find log -name '*.log' | sort | ./makecsv > bridgetest.csv 2> bandwidth.csv
