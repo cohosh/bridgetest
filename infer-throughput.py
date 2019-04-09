@@ -13,6 +13,7 @@ Solution: We analyze the pcap file of the download and extract the ACK segments
 """
 
 import sys
+import time
 
 import scapy.all as scapy
 
@@ -23,12 +24,14 @@ SERVER_TUPLE = ("4.3.2.1", 4321)
 # Number of seconds of our time intervals.
 CUM_TIME_THRESHOLD = 1
 
+timestamp = None
 prev_ack = None
 prev_time = None
 cum_time = 0
 sent_bytes = 0
+client_port = 0
 
-print "bytes,timestamp"
+print "test,bytes,timestamp"
 
 def ignore_packet(packet):
 
@@ -43,8 +46,6 @@ def ignore_packet(packet):
 
     # Make sure that we only inspect the given client and server TCP ports.
     if not packet.haslayer(scapy.TCP):
-        return True
-    if not packet[scapy.TCP].sport == CLIENT_TUPLE[1]:
         return True
     if not packet[scapy.TCP].dport == SERVER_TUPLE[1]:
         return True
@@ -62,9 +63,20 @@ def process_packet(packet):
     global prev_time
     global cum_time
     global sent_bytes
+    global timestamp
+    global client_port
 
     if ignore_packet(packet):
         return
+
+    # Reset measurements for a new connection
+    if not packet[scapy.TCP].sport == client_port:
+        client_port = packet[scapy.TCP].sport
+        timestamp = packet.time
+        prev_time = None
+        prev_ack = None
+        sent_bytes = 0
+        cum_time = 0
 
     # Remember timestamp and ACK number of the very first segment.
     if prev_time is None and prev_ack is None:
@@ -77,7 +89,7 @@ def process_packet(packet):
     cum_time += (packet.time - prev_time)
 
     if cum_time > CUM_TIME_THRESHOLD:
-        print "%d,%.2f" % (sent_bytes, int(packet.time))
+        print "%s,%d,%.2f" % (time.strftime("%b %d %H:%M:%S", time.gmtime(timestamp)), sent_bytes, int(packet.time)- int(timestamp))
         sent_bytes = 0
         cum_time = 0
 
