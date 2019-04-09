@@ -23,6 +23,12 @@ SERVER_TUPLE = ("4.3.2.1", 4321)
 # Number of seconds of our time intervals.
 CUM_TIME_THRESHOLD = 1
 
+prev_ack = None
+prev_time = None
+cum_time = 0
+sent_bytes = 0
+
+print "bytes,timestamp"
 
 def ignore_packet(packet):
 
@@ -44,45 +50,41 @@ def ignore_packet(packet):
         return True
 
     # Make sure that we're only inspecting ACK segments.
-    if packet[scapy.TCP].flags != 16:
+    if not (packet[scapy.TCP].flags.A):
         return True
 
     return False
 
 
-def process_file(pcap_file):
+def process_packet(packet):
 
-    prev_ack = None
-    prev_time = None
-    cum_time = 0
-    sent_bytes = 0
+    global prev_ack
+    global prev_time
+    global cum_time
+    global sent_bytes
 
-    print "bytes,timestamp"
-    packets = scapy.rdpcap(pcap_file)
-    for packet in packets:
+    if ignore_packet(packet):
+        return
 
-        if ignore_packet(packet):
-            continue
+    # Remember timestamp and ACK number of the very first segment.
+    if prev_time is None and prev_ack is None:
+        prev_time = packet.time
+        prev_ack = packet[scapy.TCP].ack
+        return
 
-        # Remember timestamp and ACK number of the very first segment.
-        if prev_time is None and prev_ack is None:
-            prev_time = packet[scapy.TCP].time
-            prev_ack = packet[scapy.TCP].ack
-            continue
+    ack = packet[scapy.TCP].ack
+    sent_bytes += (ack - prev_ack)
+    cum_time += (packet.time - prev_time)
 
-        ack = packet[scapy.TCP].ack
-        sent_bytes += (ack - prev_ack)
-        cum_time += (packet[scapy.TCP].time - prev_time)
+    if cum_time > CUM_TIME_THRESHOLD:
+        print "%d,%.2f" % (sent_bytes, int(packet.time))
+        sent_bytes = 0
+        cum_time = 0
 
-        if cum_time > CUM_TIME_THRESHOLD:
-            print "%d,%.2f" % (sent_bytes, int(packet[scapy.TCP].time))
-            sent_bytes = 0
-            cum_time = 0
+    prev_ack = ack
+    prev_time = packet.time
 
-        prev_ack = ack
-        prev_time = packet[scapy.TCP].time
-
-    return 0
+    return
 
 
 if __name__ == "__main__":
@@ -92,4 +94,4 @@ if __name__ == "__main__":
         sys.exit(1)
     pcap_file = sys.argv[1]
 
-    sys.exit(process_file(pcap_file))
+    sys.exit(scapy.sniff(offline=pcap_file, prn=process_packet, store=0))
