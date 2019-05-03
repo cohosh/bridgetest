@@ -15,7 +15,7 @@ import stem.process
 BRIDGE_LINES = (
 )
 
-START_TOR_TIMEOUT = 3 * 60
+START_TOR_TIMEOUT = 90
 CIRCUIT_BUILD_TIMEOUT = 60
 OBFS4PROXY_PATH = "/usr/bin/obfs4proxy"
 SNOWFLAKE_PATH = "/usr/bin/snowflake"
@@ -40,7 +40,7 @@ def start_tcpdump(basename):
     # usermod -a -G tcpdump user
     # chgrp tcpdump /usr/sbin/tcpdump
     # setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
-    p = subprocess.Popen(["/usr/sbin/tcpdump", "-i", "tun0", "-U", "-B", "4096", "-c", "100", "-w", basename + ".pcap", bpf],
+    p = subprocess.Popen(["/usr/sbin/tcpdump", "-i", "eth0", "-U", "-B", "4096", "-c", "100", "-w", basename + ".pcap", bpf],
         stdout=open(basename + ".pcap", "w"),
         stderr=open(basename + ".tcpdump.err", "w"))
     return p
@@ -189,20 +189,22 @@ for x in range(0, 10):
 		}
 	try:
 	    tor_proc, socks_port, _ = start_tor(tor_config)
+            tor_proc.terminate()
+            tor_proc.wait()
 	except OSError as err:
 	    logging.info("failed to start tor: %s" % err)
+            continue
 
-	#Extract the proxy ip
-	output = subprocess.Popen(["/usr/bin/tshark", "-q", "-Xlua_script:../../../proxy-ip.lua", "-r",  "%s.pcap" % nickname],
-					stdout=subprocess.PIPE).communicate()[0]
-        proxyip = output.strip()
-	os.rename("%s.log" % nickname, "snowflake-%s.log" % proxyip)
-	logging.info("Probed snowflake proxy %s" % proxyip)
-
-        tor_proc.terminate()
-        tor_proc.wait()
+        finally:
+            output = subprocess.Popen(["/usr/bin/tshark", "-q", "-Xlua_script:../../../proxy-ip.lua", "-r",  "%s.pcap" % nickname],
+                                            stdout=subprocess.PIPE).communicate()[0]
+            proxyip = output.strip()
+            os.rename("%s.log" % nickname, "snowflake-%s.log" % proxyip)
+            logging.info("Probed snowflake proxy %s" % proxyip)
     finally:
+	#Extract the proxy ip
         logging.info("deleting temporary DataDirectory %r", datadir)
         shutil.rmtree(datadir)
         if tcpdump_proc is not None:
             tcpdump_proc.terminate()
+
