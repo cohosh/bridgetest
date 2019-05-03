@@ -18,6 +18,7 @@ BRIDGE_LINES = (
 START_TOR_TIMEOUT = 3 * 60
 CIRCUIT_BUILD_TIMEOUT = 60
 OBFS4PROXY_PATH = "/usr/bin/obfs4proxy"
+SNOWFLAKE_PATH = "/usr/bin/snowflake"
 
 def makedirs(path):
     try:
@@ -31,15 +32,16 @@ def get_address_from_bridge_line(bridge_line):
     port = int(port)
     return (host, port)
 
-def start_tcpdump(basename, addr):
-    bpf = "(src host %(host)s and src port %(port)d) or (dst host %(host)s and dst port %(port)d)" % {"host": addr[0], "port": addr[1]}
+def start_tcpdump(basename):
+    # need to look at capture file to see which snowflake we got
+    bpf = "udp"
     # http://packetlife.net/blog/2010/mar/19/sniffing-wireshark-non-root-user/
     # groupadd tcpdump
     # usermod -a -G tcpdump user
     # chgrp tcpdump /usr/sbin/tcpdump
     # setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
     p = subprocess.Popen(["/usr/sbin/tcpdump", "-i", "tun0", "-U", "-B", "4096", "-c", "100", "-w", basename + ".pcap", bpf],
-        stdout=open(basename + ".tcpdump.out", "w"),
+        stdout=open(basename + ".pcap", "w"),
         stderr=open(basename + ".tcpdump.err", "w"))
     return p
 
@@ -131,11 +133,6 @@ with open(bridge_lines_file) as f:
         try:
             logging.info("starting tcpdump for bridge %r" % nickname)
             addr = get_address_from_bridge_line(bridge_line)
-            try:
-                tcpdump_proc = start_tcpdump(nickname, addr)
-            except OSError as e:
-                logging.info("failed to start tcpdump: %s", e)
-                # Carry on regardless.
 
             logging.info("starting tor for bridge %r" % nickname)
             logging.info("Bridge %s" % bridge_line)
@@ -164,3 +161,48 @@ with open(bridge_lines_file) as f:
             shutil.rmtree(datadir)
             if tcpdump_proc is not None:
                 tcpdump_proc.terminate()
+#
+#Now do a set of probes of snowflake proxies
+for x in range(0, 10):
+    nickname = "snowflake-probe-%(num)d" % {"num": x}
+    datadir = tempfile.mkdtemp(prefix="datadir.", dir=".")
+    logging.info("created temporary DataDirectory %r", datadir)
+    tcpdump_proc = None
+    try:
+        logging.info("starting tcpdump for bridge %r" % nickname)
+        try:
+            tcpdump_proc = start_tcpdump(nickname)
+        except OSError as e:
+            logging.info("failed to start tcpdump, stopping snowflake probe: %s", e)
+            #these tests break if we can't find the proxy ip address
+            break
+	logging.info("starting tor for bridge %r" % nickname)
+	tor_config = {
+		"DataDirectory": datadir, 
+		"Log": "notice file %s" % os.path.join(".", "%s.log" % nickname),
+		"UseBridges": "1",
+		"ClientTransportPlugin": "snowflake exec %s \
+					-url https://snowflake-broker.azureedge.net/ \
+					-front ajax.aspnetcdn.com \
+					-ice stun:stun.l.google.com:19302" % SNOWFLAKE_PATH,
+		"Bridge": "snowflake 0.0.3.0:1",
+		}
+	try:
+	    tor_proc, socks_port, _ = start_tor(tor_config)
+	except OSError as err:
+	    logging.info("failed to start tor: %s" % err)
+
+	#Extract the proxy ip
+	output = subprocess.Popen(["/usr/bin/tshark", "-q", "-Xlua_script:../../../proxy-ip.lua", "-r",  "%s.pcap" % nickname],
+					stdout=subprocess.PIPE).communicate()[0]
+        proxyip = output.strip()
+	os.rename("%s.log" % nickname, "snowflake-%s.log" % proxyip)
+	logging.info("Probed snowflake proxy %s" % proxyip)
+
+        tor_proc.terminate()
+        tor_proc.wait()
+    finally:
+        logging.info("deleting temporary DataDirectory %r", datadir)
+        shutil.rmtree(datadir)
+        if tcpdump_proc is not None:
+            tcpdump_proc.terminate()
