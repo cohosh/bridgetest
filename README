@@ -6,6 +6,8 @@ pip install stem
 #obfs4 and tor
 apt install obfs4proxy tor torsocks
 
+### Obfs4 Probing Tests ###
+
 [SITENAME] is an arbitrary identifier for the probe site
 that you have to choose.
 
@@ -22,3 +24,9 @@ Generate a CSV file from logs:
 
 Make a graph:
 	Rscript graph.R bridgetest.csv
+
+### Snowflake Probing Tests ###
+
+Add to crontab to run tests 4x a day (offset from obfs4 tests):
+	0 (1-23)/6 * * * cd ~/bridgetest && ./snowflaketest.sh [SITENAME]
+

@@ -128,7 +128,7 @@ for x in range(0, 10):
             continue
 
         finally:
-            subprocess.Popen(["/usr/bin/tshark", "-q", "-Xlua_script:snowflake-stage.lua", "-r",  "%s.pcap" % nickname],
+            subprocess.Popen(["/usr/bin/tshark", "-q", "-Xlua_script:../../../snowflake-stage.lua", "-r",  "%s.pcap" % nickname],
                                             stdout=output).communicate()[0]
             logging.info("Probed snowflake proxy %d time(s)" % (x+1))
     finally:
