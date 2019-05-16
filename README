@@ -30,3 +30,6 @@ Make a graph:
 Add to crontab to run tests 4x a day (offset from obfs4 tests):
 	0 1-23/6 * * * cd ~/bridgetest && ./snowflaketest.sh [SITENAME]
 
+Generate a CSV file from logs:
+	find snowflake_log -name '*.log' | sort | ./snowflakecsv > snowflaketest.csv
+
