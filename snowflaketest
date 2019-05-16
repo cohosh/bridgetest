@@ -91,9 +91,14 @@ time.tzset()
 logging.info("starting")
 
 #Now do a set of probes of snowflake proxies
-for x in range(0, 1):
+for x in range(0, 10):
+    # Need to flush dns caches
+    subprocess.Popen(["/usr/bin/systemd-resolve", "--flush-caches"])
+
+    # Set up logs and datadir for probe
     nickname = "snowflake-probe-%(num)d" % {"num": x}
     datadir = tempfile.mkdtemp(prefix="datadir.", dir=".")
+    output = open("%s.log" % nickname, "w")
     logging.info("created temporary DataDirectory %r", datadir)
     tcpdump_proc = None
     try:
@@ -107,7 +112,6 @@ for x in range(0, 1):
 	logging.info("starting tor for bridge %r" % nickname)
 	tor_config = {
 		"DataDirectory": datadir, 
-		"Log": "notice file %s" % os.path.join(".", "%s.log" % nickname),
 		"UseBridges": "1",
 		"ClientTransportPlugin": "snowflake exec %s \
 					-url https://snowflake-broker.azureedge.net/ \
@@ -124,12 +128,11 @@ for x in range(0, 1):
             continue
 
         finally:
-            output = subprocess.Popen(["/usr/bin/tshark", "-q", "-Xlua_script:proxy-ip.lua", "-r",  "%s.pcap" % nickname],
-                                            stdout=subprocess.PIPE).communicate()[0]
-            proxyip = output.strip()
-            os.rename("%s.log" % nickname, "snowflake-%s.log" % proxyip)
-            logging.info("Probed snowflake proxy %s" % proxyip)
+            subprocess.Popen(["/usr/bin/tshark", "-q", "-Xlua_script:snowflake-stage.lua", "-r",  "%s.pcap" % nickname],
+                                            stdout=output).communicate()[0]
+            logging.info("Probed snowflake proxy %d time(s)" % (x+1))
     finally:
+        output.close()
 	#Extract the proxy ip
         logging.info("deleting temporary DataDirectory %r", datadir)
         shutil.rmtree(datadir)

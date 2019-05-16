@@ -73,7 +73,10 @@ do
             if(stun_ipv4 or stun_ipv6) then
                 --check if we've received a Binding success response
                 if(stun_extractor() and stun_response_extractor()) then
-                    local ip_src, ip_dst = ip_addr_extractor()
+                    local ip_src, _ = ip_addr_extractor()
+                    if (not ip_src) then
+                        ip_src = ipv6_addr_extractor()
+                    end
                     if( (tostring(ip_src) == stun_ipv4) or (tostring(ip_src) == stun_ipv6)) then
                         print("Received STUN success response from "..tostring(ip_src))
                         stage = "Signaling"
@@ -101,8 +104,11 @@ do
 
             if(broker_ipv4 or broker_ipv6) then
                 --look or successfull TLS handshake
-                local ip_src, ip_dst = ip_addr_extractor()
-                if( (tostring(ip_src) == broker_ipv4) or (tostring(ip_dst) == broker_ipv6)) then
+                local ip_src, _ = ip_addr_extractor()
+                if (not ip_src) then
+                    ip_src = ipv6_addr_extractor()
+                end
+                if( (tostring(ip_src) == broker_ipv4) or (tostring(ip_src) == broker_ipv6)) then
                     isTLS = tls_extractor()
                     isTLSsuccess = tls_success_extractor()
                     if(isTLS and isTLSsuccess) then
