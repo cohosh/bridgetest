@@ -28,5 +28,5 @@ Make a graph:
 ### Snowflake Probing Tests ###
 
 Add to crontab to run tests 4x a day (offset from obfs4 tests):
-	0 (1-23)/6 * * * cd ~/bridgetest && ./snowflaketest.sh [SITENAME]
+	0 1-23/6 * * * cd ~/bridgetest && ./snowflaketest.sh [SITENAME]
 
