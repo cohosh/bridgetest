@@ -10,41 +10,46 @@ import sys
 # For strptime.
 locale.setlocale(locale.LC_ALL, "C")
 
-# Dec 01 20:57:53.000 [notice] Bootstrapped 0%: Starting
-stage_re = re.compile(r'^(\w+ \d+ \d\d:\d\d:\d\d\.\d\d\d) \[\w+\] stage:(.*)')
+# Dec 01 20:57:53.000
+stage_re = re.compile(r'^stage:(.*)')
+date_re = re.compile(r'^(\w+ \d+ \d\d:\d\d:\d\d\.\d\d\d)')
+ip_re = re.compile(r'^Successfully connected to snowflake (.*)')
 
-csvW = csv.DictWriter(sys.stdout, fieldnames=("timestamp", "site", "runid", "nickname", "percent"))
+csvW = csv.DictWriter(sys.stdout, fieldnames=("timestamp", "site", "runid", "ip", "percent"))
 csvW.writeheader()
-
-csvE = csv.DictWriter(sys.stderr, fieldnames=("site", "runid", "nickname", "download"))
-csvE.writeheader()
 
 stages = {'Gathering': 20, 'Signaling': 40, 'Connecting': 60, 'Data': 80, 'Done':100}
 
+rows = []
+
 
 def process_log(f, site, runid, nickname):
-    timestamp = None
+    timestamp = datetime.datetime.strptime(runid, "%Y%m%d-%H%M")
+    ip = None
     for line in f:
-        if timestamp is None:
-            timestamp = datetime.datetime.strptime(line, "%b %d %H:%M:%S.%f")
-            # tor logs don't contain the year, so grab it from the runid.
-            timestamp = timestamp.replace(year=int(runid[:4]))
+        
+        m = ip_re.match(line)
+        if m is not None:
+            ip = m.group(1)
 
-        m = bootstrapped_re.match(line)
+        m = stage_re.match(line)
         if m is not None:
 
-            stage = m.group(2)
+            stage = m.group(1)
             percent = stages[stage]
 
             row = {
                 "timestamp": timestamp.strftime("%Y-%m-%d %H:%M:%S.%f"),
                 "site": site,
                 "runid": runid,
-                "nickname": nickname,
+                "ip": "",
                 "percent": percent,
             }
-            csvW.writerow(row)
-
+            rows.append(row)
+        
+    for row in rows:
+        row['ip'] = ip
+        csvW.writerow(row)
 
 for filename in sys.stdin:
     filename = filename.strip()
