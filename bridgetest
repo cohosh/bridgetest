@@ -121,49 +121,8 @@ time.tzset()
 
 logging.info("starting")
 
-bridge_lines_file = sys.argv[1]
-with open(bridge_lines_file) as f:
-    for line in f:
-        nickname, bridge_line = line.split(",", 1)
-
-        datadir = tempfile.mkdtemp(prefix="datadir.", dir=".")
-        logging.info("created temporary DataDirectory %r", datadir)
-        tcpdump_proc = None
-        socks_port = 0
-        try:
-            logging.info("starting tcpdump for bridge %r" % nickname)
-            addr = get_address_from_bridge_line(bridge_line)
-
-            logging.info("starting tor for bridge %r" % nickname)
-            logging.info("Bridge %s" % bridge_line)
-            tor_config = {
-                    "DataDirectory": datadir,
-                    "Log": "notice file %s" % os.path.join(".", "%s.log" % nickname),
-                    "UseBridges": "1",
-                    "Bridge": bridge_line,
-                    }
-            try:
-                tor_proc, socks_port, _ = start_tor(tor_config)
-            except OSError as err:
-                logging.info("failed to start tor: %s" % err)
-                continue
-
-            #Now try a large file download
-            download_time = download_file(socks_port)
-            f = open(os.path.join(".", "%s.log" % nickname), 'a')
-            f.write("Downloaded " + str(download_time) + "s\n")
-            f.close()
-
-            tor_proc.terminate()
-            tor_proc.wait()
-        finally:
-            logging.info("deleting temporary DataDirectory %r", datadir)
-            shutil.rmtree(datadir)
-            if tcpdump_proc is not None:
-                tcpdump_proc.terminate()
-#
 #Now do a set of probes of snowflake proxies
-for x in range(0, 10):
+for x in range(0, 100):
     nickname = "snowflake-probe-%(num)d" % {"num": x}
     datadir = tempfile.mkdtemp(prefix="datadir.", dir=".")
     logging.info("created temporary DataDirectory %r", datadir)
@@ -199,7 +158,6 @@ for x in range(0, 10):
             output = subprocess.Popen(["/usr/bin/tshark", "-q", "-Xlua_script:../../../proxy-ip.lua", "-r",  "%s.pcap" % nickname],
                                             stdout=subprocess.PIPE).communicate()[0]
             proxyip = output.strip()
-            os.rename("%s.log" % nickname, "snowflake-%s.log" % proxyip)
             logging.info("Probed snowflake proxy %s" % proxyip)
     finally:
 	#Extract the proxy ip

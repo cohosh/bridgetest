@@ -13,8 +13,10 @@ x$timestamp <- as.POSIXct(x$timestamp, tz="UTC")
 # (otherwise it looks like timeouts; i.e. blocking)
 
 x.max <- x[ , .SD[which.max(percent)], by=.(site, runid, nickname)]
-setkey(x.max, site, runid, nickname)
+setkey(x.max, site, runid)
 
+head(x)
+head(x.max)
 
 cat("
 {{{#!html
@@ -53,14 +55,12 @@ pdf(width=8.5, height=14)
 # p
 
 tmp <- x.max
-tmp$site <- factor(tmp$site, levels=c("na", "cn"), labels=c("CA", "CN"))
+head(tmp)
+
 p <- ggplot(tmp)
 p <- p + geom_point(aes(timestamp, percent, color=site, shape=site, size=site), alpha=0.4)
-p <- p + facet_grid(nickname ~ .)
-p <- p + scale_y_continuous(limits=c(0, 105))
+p <- p + scale_y_continuous(breaks = seq(0, 100, by = 10))
 p <- p + scale_color_brewer(palette="Set1")
-p <- p + scale_shape_manual(values=c(CA=4, CN=16))
-p <- p + scale_size_manual(values=c(CA=1.0, CN=1.0))
 p <- p + theme_bw()
 p <- p + theme(strip.text.y=element_text(angle=0))
 p <- p + theme(legend.position="top")
