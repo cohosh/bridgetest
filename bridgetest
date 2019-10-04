@@ -48,7 +48,7 @@ def download_file(socks_port):
     
     try:
         start = time.time()
-        subprocess.check_call(["/usr/bin/torsocks", "-P", str(socks_port), "wget", "-O", "/dev/null", "http://mirror.cs.uwaterloo.ca/raspbian/images/apc_apricot_r1.zip"])
+        subprocess.check_call(["/usr/bin/torsocks", "-P", str(socks_port), "wget", "-O", "/dev/null", "https://mirror.csclub.uwaterloo.ca/ubuntu/dists/bionic/Contents-amd64.gz"])
         stop = time.time()
         download_time = stop - start
     except subprocess.CalledProcessError as e:
@@ -131,11 +131,6 @@ with open(bridge_lines_file) as f:
         try:
             logging.info("starting tcpdump for bridge %r" % nickname)
             addr = get_address_from_bridge_line(bridge_line)
-            try:
-                tcpdump_proc = start_tcpdump(nickname, addr)
-            except OSError as e:
-                logging.info("failed to start tcpdump: %s", e)
-                # Carry on regardless.
 
             logging.info("starting tor for bridge %r" % nickname)
             logging.info("Bridge %s" % bridge_line)

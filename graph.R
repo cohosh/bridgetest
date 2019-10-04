@@ -34,8 +34,8 @@ cat("</table>
 ")
 
 
-#pdf(width=8.5, height=14)
-png(width = 540, height = 840)
+pdf(width=8.5, height=14)
+#png(width = 540, height = 840)
 
 # runids <- unique(x$runid)
 # runids <- runids[order(runids)]
