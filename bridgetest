@@ -15,7 +15,7 @@ import stem.process
 BRIDGE_LINES = (
 )
 
-START_TOR_TIMEOUT = 90
+START_TOR_TIMEOUT = 3*60
 CIRCUIT_BUILD_TIMEOUT = 60
 OBFS4PROXY_PATH = "/usr/bin/obfs4proxy"
 SNOWFLAKE_PATH = "/usr/bin/snowflake"
@@ -40,7 +40,7 @@ def start_tcpdump(basename):
     # usermod -a -G tcpdump user
     # chgrp tcpdump /usr/sbin/tcpdump
     # setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
-    p = subprocess.Popen(["/usr/sbin/tcpdump", "-i", "eth0", "-U", "-B", "4096", "-c", "100", "-w", basename + ".pcap", bpf],
+    p = subprocess.Popen(["/usr/sbin/tcpdump", "-i", "tun0", "-U", "-B", "4096", "-c", "100", "-w", basename + ".pcap", bpf],
         stdout=open(basename + ".pcap", "w"),
         stderr=open(basename + ".tcpdump.err", "w"))
     return p
@@ -50,7 +50,8 @@ def download_file(socks_port):
     
     try:
         start = time.time()
-        subprocess.check_call(["/usr/bin/torsocks", "-P", str(socks_port), "wget", "-O", "/dev/null", "http://mirror.cs.uwaterloo.ca/raspbian/images/apc_apricot_r1.zip"])
+        # Download a ~1MB file
+        subprocess.check_call(["/usr/bin/torsocks", "-P", str(socks_port), "wget", "-O", "/dev/null", "https://mirror.csclub.uwaterloo.ca/ubuntu/dists/xenial/main/binary-amd64/Packages.xz"])
         stop = time.time()
         download_time = stop - start
     except subprocess.CalledProcessError as e:
@@ -148,6 +149,7 @@ for x in range(0, 100):
 		}
 	try:
 	    tor_proc, socks_port, _ = start_tor(tor_config)
+            download_file(socks_port)
             tor_proc.terminate()
             tor_proc.wait()
 	except OSError as err:
