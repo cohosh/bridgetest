@@ -34,13 +34,13 @@ def get_address_from_bridge_line(bridge_line):
 
 def start_tcpdump(basename):
     # need to look at capture file to see which snowflake we got
-    bpf = "udp"
+    bpf = "tcp"
     # http://packetlife.net/blog/2010/mar/19/sniffing-wireshark-non-root-user/
     # groupadd tcpdump
     # usermod -a -G tcpdump user
     # chgrp tcpdump /usr/sbin/tcpdump
     # setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
-    p = subprocess.Popen(["/usr/sbin/tcpdump", "-i", "tun0", "-U", "-B", "4096", "-c", "100", "-w", basename + ".pcap", bpf],
+    p = subprocess.Popen(["/usr/sbin/tcpdump", "-i", "lo", "-U", "-B", "4096", "-w", basename + ".pcap", bpf],
         stdout=open(basename + ".pcap", "w"),
         stderr=open(basename + ".tcpdump.err", "w"))
     return p
@@ -51,7 +51,7 @@ def download_file(socks_port):
     try:
         start = time.time()
         # Download a ~1MB file
-        subprocess.check_call(["/usr/bin/torsocks", "-P", str(socks_port), "wget", "-O", "/dev/null", "https://mirror.csclub.uwaterloo.ca/ubuntu/dists/xenial/main/binary-amd64/Packages.xz"])
+        subprocess.check_call(["/usr/local/bin/torsocks", "-P", str(socks_port), "wget", "-O", "/dev/null", "https://mirror.csclub.uwaterloo.ca/ubuntu/dists/xenial/main/binary-amd64/Packages.xz"])
         stop = time.time()
         download_time = stop - start
     except subprocess.CalledProcessError as e:

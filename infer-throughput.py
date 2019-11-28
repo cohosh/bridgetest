@@ -18,8 +18,8 @@ import time
 import scapy.all as scapy
 
 # Change this to whatever client/server tuple you want to analyze.
-CLIENT_TUPLE = ("1.2.3.4", 1234)
-SERVER_TUPLE = ("4.3.2.1", 4321)
+ip_addr = "127.0.0.1"
+server_port = 0
 
 # Number of seconds of our time intervals.
 CUM_TIME_THRESHOLD = 1
@@ -31,6 +31,10 @@ cum_time = 0
 sent_bytes = 0
 client_port = 0
 
+test_id = 0
+
+socks_re = re.compile('.*Socks listener listening on port (\d+)')
+
 print "test,bytes,timestamp"
 
 def ignore_packet(packet):
@@ -39,15 +43,15 @@ def ignore_packet(packet):
     # addresses.
     if not packet.haslayer(scapy.IP):
         return True
-    if not packet[scapy.IP].src == CLIENT_TUPLE[0]:
+    if not packet[scapy.IP].src == ip_addr:
         return True
-    if not packet[scapy.IP].dst == SERVER_TUPLE[0]:
+    if not packet[scapy.IP].dst == ip_addr:
         return True
 
     # Make sure that we only inspect the given client and server TCP ports.
     if not packet.haslayer(scapy.TCP):
         return True
-    if not packet[scapy.TCP].dport == SERVER_TUPLE[1]:
+    if not packet[scapy.TCP].dport == server_port:
         return True
 
     # Make sure that we're only inspecting ACK segments.
@@ -88,11 +92,6 @@ def process_packet(packet):
     sent_bytes += (ack - prev_ack)
     cum_time += (packet.time - prev_time)
 
-    if cum_time > CUM_TIME_THRESHOLD:
-        print "%s,%d,%.2f" % (time.strftime("%b %d %H:%M:%S", time.gmtime(timestamp)), sent_bytes, int(packet.time)- int(timestamp))
-        sent_bytes = 0
-        cum_time = 0
-
     prev_ack = ack
     prev_time = packet.time
 
@@ -101,9 +100,26 @@ def process_packet(packet):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 2:
-        print >> sys.stderr, "\nUsage: %s PCAP_FILE\n" % sys.argv[0]
-        sys.exit(1)
-    pcap_file = sys.argv[1]
+    for i in range(0,100):
+        test_id = i
+        pcap_file = ("log/linux-na/20191127-1845/snowflake-probe-%d.pcap" %i )
+        log_file = ("log/linux-na/20191127-1845/snowflake-probe-%d.log" %i )
 
-    sys.exit(scapy.sniff(offline=pcap_file, prn=process_packet, store=0))
+        sys.stderr.write("Processing snowflake probe %d\n" % i)
+        # Figure out the Socks port from the log file
+        with open(log_file) as f:
+            for line in f:
+                m = socks_re.match(line)
+
+                if m is not None:
+                    server_port = int(m.group(1))
+                    sys.stderr.write("Found Socks port %s\n" % server_port)
+                    break
+
+
+        scapy.sniff(offline=pcap_file, prn=process_packet, store=0)
+        print "%d,%d,%.2f" % ( i, sent_bytes, cum_time)
+        sent_bytes = 0
+        cum_time = 0
+        prev_time = None
+        prev_ack = None
