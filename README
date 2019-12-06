@@ -33,3 +33,10 @@ Analyze snowflake throughput from pcap files:
     1. Adapt the LOG_PATH variable in snowflake-throughput.py
     2. Run the script: python snowflake-throughput.py > download.csv
     3. Plot the results: Rscript snowflake-throughput.R download.csv    
+
+Analyze snowflake reachability from log files:
+    1. 
+
+### Clean up ###
+To remove generate pcap files, run
+find log/ -name "*.pcap* --delete

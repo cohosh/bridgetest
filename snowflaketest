@@ -113,7 +113,8 @@ for x in range(0, 100):
     datadir = tempfile.mkdtemp(prefix="datadir.", dir=".")
     output = open("%s.log" % nickname, "w")
     logging.info("created temporary DataDirectory %r", datadir)
-    tcpdump_proc = None
+    tcpdump_lo_proc = None
+    tcpdump_eth0_proc = None
     try:
         logging.info("starting tcpdump for bridge %r" % nickname)
         try:
