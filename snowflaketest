@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from datetime import datetime
 import errno
 import logging
 import os
@@ -37,7 +38,7 @@ def download_file(socks_port):
     try:
         start = time.time()
         # Download a ~1MB file
-        subprocess.run(["/usr/bin/torsocks", "-P", str(socks_port), "wget", "-O", "/dev/null", "https://mirror.csclub.uwaterloo.ca/ubuntu/dists/xenial/main/binary-amd64/Packages.xz"], check=True)
+        subprocess.run(["torsocks", "-P", str(socks_port), "wget", "-O", "/dev/null", "https://mirror.csclub.uwaterloo.ca/ubuntu/dists/xenial/main/binary-amd64/Packages.xz"], check=True)
         stop = time.time()
         download_time = stop - start
     except subprocess.CalledProcessError as e:
@@ -118,8 +119,8 @@ for x in range(0, 100):
     try:
         logging.info("starting tcpdump for bridge %r" % nickname)
         try:
-            tcpdump_lo_proc = start_tcpdump(nickname, lo)
-            tcpdump_eth0_proc = start_tcpdump(nickname, eth0)
+            tcpdump_lo_proc = start_tcpdump(nickname, "lo")
+            tcpdump_eth0_proc = start_tcpdump(nickname, "eth0")
         except OSError as e:
             logging.info("failed to start tcpdump, stopping snowflake probe: %s", e)
             #these tests break if we can't find the proxy ip address
@@ -148,7 +149,7 @@ for x in range(0, 100):
             #give data to log file
             timestamp = datetime.utcnow().strftime("%b %d %H:%M:%S.%f")
             output.write(timestamp+"\n")
-            subprocess.Popen(["/usr/bin/tshark", "-q", "-Xlua_script:../../../snowflake-stage.lua", "-r",  "%s.pcap" % nickname],
+            subprocess.Popen(["/usr/bin/tshark", "-q", "-Xlua_script:../../../../snowflake-stage.lua", "-r",  "%s.pcap" % nickname],
                                             stdout=output).communicate()[0]
             logging.info("Probed snowflake proxy %d time(s)" % (x+1))
 
