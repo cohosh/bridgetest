@@ -33,7 +33,6 @@ cat("</table>
 }}}
 ")
 
-
 pdf(width=8.5, height=14)
 
 # runids <- unique(x$runid)
@@ -66,3 +65,24 @@ p <- p + theme(strip.text.y=element_text(angle=0))
 p <- p + theme(legend.position="top")
 p <- p + guides(color=guide_legend(override.aes=list(alpha=1, size=2.5)))
 p
+
+dev.off()
+
+setDT(x)
+x.max <- x[ , .SD[which.max(percent)], by=.(site, runid, ip)]
+setkey(x.max, site, runid)
+
+ggdata = data.frame(x = x.max$percent)
+
+ggplot(ggdata, aes(x=x)) + 
+  stat_ecdf(show.legend=FALSE) + labs(x='Snowflake stage (%)', y='CDF') + 
+  theme(text = element_text(size=12,family="Times")) + theme_bw() + theme(text = element_text(size=12,family="Times")) +
+  scale_x_continuous(limits = c(0,105), breaks=c(20,40,60,80,100), labels=c("Gathering", "Signaling","Connecting","Data", "Done"))
+
+ggsave("stage.pdf",
+       width = 7,
+       height = 5)
+
+
+print(paste("Number of successful snowflake connections: ", length(x.max$percent[x.max$percent == 100]), sep=""))
+print(paste("Average connection progress: ", mean(x.max$percent), sep=""))
