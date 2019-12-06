@@ -5,8 +5,8 @@ set -e
 CASE="${1:?}"
 SITE="${2:?}"
 
-if ! [[ "$CASE" =~ ^(obfs4)$ ]]; then
-    echo 'Error, please choose a valid test type from [obfs4]'
+if ! [[ "$CASE" =~ ^(obfs4|snowflake)$ ]]; then
+    echo 'Error, please choose a valid test type from ["obfs4"|"snowflake"]'
     exit 1
 fi
 
@@ -18,5 +18,8 @@ cd "$logdirname"
 case $CASE in
     'obfs4')
         "$dirname/obfs4test" "$dirname/bridge_lines.txt"
+        ;;
+    'snowflake')
+        "$dirname/snowflaketest"
         ;;
 esac
