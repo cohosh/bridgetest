@@ -54,16 +54,9 @@ def download_file(socks_port):
     logging.info("Attempting to download large file")
     
     try:
-        start = time.time()
         subprocess.run(["/usr/bin/torsocks", "-P", str(socks_port), "wget", "-O", "/dev/null", LARGE_FILE_URL], check=True)
-        stop = time.time()
-        download_time = stop - start
     except subprocess.CalledProcessError as e:
         logging.info("failed to download file: %s", e)
-        download_time = -1
-
-    finally:
-        return download_time
 
 
 def start_tor(tor_config):
@@ -154,10 +147,7 @@ with open(bridge_lines_file) as f:
                 continue
 
             #Now try a large file download
-            download_time = download_file(socks_port)
-            f = open(os.path.join(".", "%s.log" % nickname), 'a')
-            f.write("Downloaded " + str(download_time) + "s\n")
-            f.close()
+            download_file(socks_port)
 
             tor_proc.terminate()
             tor_proc.wait()
