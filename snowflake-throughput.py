@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
     for i in range(0,100):
         test_id = i
-        pcap_file = ("%s/snowflake-probe-%d.pcap" % (LOG_PATH, i) )
+        pcap_file = ("%s/snowflake-probe-%d-lo.pcap" % (LOG_PATH, i) )
         log_file = ("%s/snowflake-probe-%d.log" % (LOG_PATH, i) )
 
         sys.stderr.write("Processing snowflake probe %d\n" % i)
