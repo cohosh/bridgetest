@@ -35,7 +35,8 @@ Analyze snowflake throughput from pcap files:
     3. Plot the results: Rscript snowflake-throughput.R download.csv    
 
 Analyze snowflake reachability from log files:
-    1. 
+    1. Run the script find log -name '*.log' | sort | ./snowflake-stage.py > stage.csv
+    2. Plot the results Rscript snowflake-stage.R stage.csv
 
 ### Clean up ###
 To remove generate pcap files, run
