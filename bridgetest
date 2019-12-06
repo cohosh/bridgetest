@@ -1,4 +1,10 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
+#
+# This script is designed to test the reachability and throughput of
+#   obfs4 bridges.
+#
+# Prerequisites:
+#   - pip3 install stem
 
 import errno
 import logging
@@ -12,12 +18,13 @@ import sys
 
 import stem.process
 
-BRIDGE_LINES = (
-)
-
-START_TOR_TIMEOUT = 3 * 60
+START_TOR_TIMEOUT = 60
 CIRCUIT_BUILD_TIMEOUT = 60
+
 OBFS4PROXY_PATH = "/usr/bin/obfs4proxy"
+
+#This file is ~38MB
+LARGE_FILE_URL = "https://mirror.csclub.uwaterloo.ca/ubuntu/dists/bionic/Contents-amd64.gz"
 
 def makedirs(path):
     try:
@@ -48,7 +55,7 @@ def download_file(socks_port):
     
     try:
         start = time.time()
-        subprocess.check_call(["/usr/bin/torsocks", "-P", str(socks_port), "wget", "-O", "/dev/null", "https://mirror.csclub.uwaterloo.ca/ubuntu/dists/bionic/Contents-amd64.gz"])
+        subprocess.run(["/usr/bin/torsocks", "-P", str(socks_port), "wget", "-O", "/dev/null", LARGE_FILE_URL], check=True)
         stop = time.time()
         download_time = stop - start
     except subprocess.CalledProcessError as e:
