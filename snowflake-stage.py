@@ -15,13 +15,10 @@ stage_re = re.compile(r'^stage:(.*)')
 date_re = re.compile(r'^(\w+ \d+ \d\d:\d\d:\d\d\.\d\d\d)')
 ip_re = re.compile(r'^Successfully connected to snowflake (.*)')
 
-csvW = csv.DictWriter(sys.stdout, fieldnames=("timestamp", "site", "runid", "ip", "percent"))
+csvW = csv.DictWriter(sys.stdout, fieldnames=("timestamp", "site", "runid", "probeid", "percent"))
 csvW.writeheader()
 
 stages = {'Gathering': 20, 'Signaling': 40, 'Connecting': 60, 'Data': 80, 'Done':100}
-
-rows = []
-
 
 def process_log(f, site, runid, nickname):
     timestamp = datetime.datetime.strptime(runid, "%Y%m%d-%H%M")
@@ -42,14 +39,10 @@ def process_log(f, site, runid, nickname):
                 "timestamp": timestamp.strftime("%Y-%m-%d %H:%M:%S.%f"),
                 "site": site,
                 "runid": runid,
-                "ip": "",
+                "probeid": nickname,
                 "percent": percent,
             }
-            rows.append(row)
-        
-    for row in rows:
-        row['ip'] = ip
-        csvW.writerow(row)
+            csvW.writerow(row)
 
 for filename in sys.stdin:
     filename = filename.strip()
