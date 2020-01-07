@@ -9,8 +9,8 @@ apt install obfs4proxy tor torsocks
 [SITENAME] is an arbitrary identifier for the probe site
 that you have to choose.
 
-[TYPE] is the type of probe test to be performed. Right not
-there is only one type: 'obfs4'.
+[TYPE] is the type of probe test to be performed. Right now
+there are two types: "obfs4"|"snowflake"
 
 The bridge_lines.txt file should contain a list of bridges to test. Each line corresponds to a bridge and should be of the form:
         <nickname>,<bridge_line>
