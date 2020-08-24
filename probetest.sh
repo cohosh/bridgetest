@@ -25,5 +25,7 @@ case $CASE in
         # Throughput/reachibility test of 100 snowflakes
         "$dirname/snowflaketest"
         # Process .pcap files and delete
+        "$dirname/snowflake-throughput.py" > snowflake-throughput.csv
+        rm *.pcap
         ;;
 esac

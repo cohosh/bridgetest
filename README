@@ -35,9 +35,7 @@ Analyze obfs4 throughput from pcap files:
     3. Plot the results: Rscript plot-throughput.R download.csv    
 
 Analyze snowflake throughput from pcap files:
-    1. Adapt the LOG_PATH variable in snowflake-throughput.py
-    2. Run the script: python snowflake-throughput.py > download.csv
-    3. Plot the results: Rscript snowflake-throughput.R download.csv    
+    1. Plot the results: Rscript snowflake-throughput.R snowflake-throughput.csv
 
 Analyze snowflake reachability from log files:
     1. Run the script find log -name '*.log' | sort | ./snowflake-stage.py > stage.csv

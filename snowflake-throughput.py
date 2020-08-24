@@ -17,8 +17,6 @@ import time
 
 import scapy.all as scapy
 
-LOG_PATH="log/linux-na/20191127-1845"
-
 # Change this to whatever client/server tuple you want to analyze.
 ip_addr = "127.0.0.1"
 server_port = 0
@@ -104,8 +102,8 @@ if __name__ == "__main__":
 
     for i in range(0,100):
         test_id = i
-        pcap_file = ("%s/snowflake-probe-%d-lo.pcap" % (LOG_PATH, i) )
-        log_file = ("%s/snowflake-probe-%d.log" % (LOG_PATH, i) )
+        pcap_file = ("snowflake-probe-%d-lo.pcap" % i )
+        log_file = ("snowflake-probe-%d.log" % i )
 
         sys.stderr.write("Processing snowflake probe %d\n" % i)
         # Figure out the Socks port from the log file
