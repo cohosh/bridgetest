@@ -20,6 +20,10 @@ case $CASE in
         "$dirname/obfs4test" "$dirname/bridge_lines.txt"
         ;;
     'snowflake')
+        # First test reachability of STUN servers
+        "$dirname/stun-test/stun-test"
+        # Throughput/reachibility test of 100 snowflakes
         "$dirname/snowflaketest"
+        # Process .pcap files and delete
         ;;
 esac

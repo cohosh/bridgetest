@@ -2,9 +2,14 @@ Prerequesites:
 #Python 3 and related packages
 apt install python python3-pip
 pip3 install stem
+Golang 1.13+
 
 #obfs4 and tor
 apt install obfs4proxy tor torsocks
+
+#build scripts
+cd stun-test
+go build
 
 [SITENAME] is an arbitrary identifier for the probe site
 that you have to choose.
