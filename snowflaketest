@@ -148,8 +148,6 @@ for x in range(0, 10):
             #give data to log file
             timestamp = datetime.utcnow().strftime("%b %d %H:%M:%S.%f")
             output.write(timestamp+"\n")
-            subprocess.Popen(["/usr/bin/tshark", "-q", "-Xlua_script:../../../../snowflake-stage.lua", "-r",  "%s-%s.pcap" % (nickname, "eth0")],
-                                            stdout=output).communicate()[0]
             logging.info("Probed snowflake proxy %d time(s)" % (x+1))
 
     finally:

@@ -22,10 +22,7 @@ case $CASE in
     'snowflake')
         # First test reachability of STUN servers
         "$dirname/stun-test/stun-test"
-        # Throughput/reachibility test of 100 snowflakes
+        # Throughput/reachibility test of 10 snowflakes
         "$dirname/snowflaketest"
-        # Process .pcap files and delete
-        "$dirname/snowflake-throughput.py" > snowflake-throughput.csv
-        rm *.pcap
         ;;
 esac
