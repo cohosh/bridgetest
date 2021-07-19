@@ -1,0 +1,2 @@
+0 */6 * * * cd /bridgetest && ./probetest.sh snowflake $SITENAME
+0 2-23/6 * * * cd /bridgetest && ./probetest.sh obfs4 $SITENAME
