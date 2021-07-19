@@ -38,14 +38,13 @@ def get_address_from_bridge_line(bridge_line):
     port = int(port)
     return (host, port)
 
-def start_tcpdump(basename, addr):
-    bpf = "(src host %(host)s and src port %(port)d) or (dst host %(host)s and dst port %(port)d)" % {"host": addr[0], "port": addr[1]}
+def start_tcpdump(basename, interface):
     # http://packetlife.net/blog/2010/mar/19/sniffing-wireshark-non-root-user/
     # groupadd tcpdump
     # usermod -a -G tcpdump user
     # chgrp tcpdump /usr/sbin/tcpdump
     # setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
-    p = subprocess.Popen(["/usr/sbin/tcpdump", "-i", "tun0", "-U", "-B", "4096", "-c", "100", "-w", basename + ".pcap", bpf],
+    p = subprocess.Popen(["/usr/sbin/tcpdump", "-i", interface, "-U", "-B", "4096", "-w", basename + "-%s.pcap" % interface],
         stdout=open(basename + ".tcpdump.out", "w"),
         stderr=open(basename + ".tcpdump.err", "w"))
     return p
@@ -126,10 +125,19 @@ with open(bridge_lines_file) as f:
 
         datadir = tempfile.mkdtemp(prefix="datadir.", dir=".")
         logging.info("created temporary DataDirectory %r", datadir)
-        tcpdump_proc = None
         socks_port = 0
+        tcpdump_lo_proc = None
+        tcpdump_eth0_proc = None
         try:
             logging.info("starting tcpdump for bridge %r" % nickname)
+            try:
+                tcpdump_lo_proc = start_tcpdump(nickname, "lo")
+                tcpdump_eth0_proc = start_tcpdump(nickname, "eth0")
+            except OSError as e:
+                logging.info("failed to start tcpdump, stopping snowflake probe: %s", e)
+                #these tests break if we can't find the proxy ip address
+                break
+
             addr = get_address_from_bridge_line(bridge_line)
 
             logging.info("starting tor for bridge %r" % nickname)
@@ -154,5 +162,7 @@ with open(bridge_lines_file) as f:
         finally:
             logging.info("deleting temporary DataDirectory %r", datadir)
             shutil.rmtree(datadir)
-            if tcpdump_proc is not None:
-                tcpdump_proc.terminate()
+            if tcpdump_lo_proc is not None:
+                tcpdump_lo_proc.terminate()
+            if tcpdump_eth0_proc is not None:
+                tcpdump_eth0_proc.terminate()
