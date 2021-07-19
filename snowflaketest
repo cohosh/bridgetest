@@ -27,7 +27,6 @@ def start_tcpdump(basename, interface):
     # chgrp tcpdump /usr/sbin/tcpdump
     # setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
     p = subprocess.Popen(["/usr/sbin/tcpdump", "-i", interface, "-U", "-B", "4096", "-w", basename + "-%s.pcap" % interface],
-        stdout=open(basename + ".pcap", "w"),
         stderr=open(basename + ".tcpdump.err", "w"))
     return p
 
@@ -108,7 +107,6 @@ for x in range(0, 10):
     # Set up logs and datadir for probe
     nickname = "snowflake-probe-%(num)d" % {"num": x}
     datadir = tempfile.mkdtemp(prefix="datadir.", dir=".")
-    output = open("%s.log" % nickname, "w")
     logging.info("created temporary DataDirectory %r", datadir)
     tcpdump_lo_proc = None
     tcpdump_eth0_proc = None
@@ -145,11 +143,9 @@ for x in range(0, 10):
         finally:
             #give data to log file
             timestamp = datetime.utcnow().strftime("%b %d %H:%M:%S.%f")
-            output.write(timestamp+"\n")
             logging.info("Probed snowflake proxy %d time(s)" % (x+1))
 
     finally:
-        output.close()
 	#Extract the proxy ip
         logging.info("deleting temporary DataDirectory %r", datadir)
         shutil.rmtree(datadir)
