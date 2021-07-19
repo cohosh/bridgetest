@@ -68,7 +68,7 @@ All data from the tests are located in the created `log/` directory. The directo
 ```
 log/[TYPE]/[SITENAME]/[RUN]
 ```
-where `[RUN]` is the timestamp of the test run in the format `YYYYMMDD`.
+where `[RUN]` is the timestamp of the test run in the format `YYYYMMDD-HHMM`.
 
 Inside of each run's directory are a combination of capture files and logs, depending on the type of test.
 
@@ -94,39 +94,44 @@ The snowflake tests checks the reachability of the default STUN servers and then
 We've written some scripts to analyze and extract data from the packet captures, but in some cases manually inspecting the capture files might prove useful.
 
 Analyze Tor bootstrap progress from logs:
-	1. Make the CSV:
+1. Make the CSV:
     ```
     find log/[TYPE] -name '*.log' | sort | ./makecsv > bootstrap.csv
     ```
-	2. Plot the results:
+
+2. Plot the results:
     ```
     Rscript plot-bootstrap.R bootstrap.csv
     ```
 
 Analyze obfs4 throughput from pcap files:
-    1. Adapt the variables `CLIENT_TUPLE` and `SERVER_TUPLE` in `infer-throughput.py`.
-    2. Run the script:
+1. Adapt the variables `CLIENT_TUPLE` and `SERVER_TUPLE` in `infer-throughput.py`.
+
+2. Run the script:
     ```
     python obfs4-throughput.py download.pcap > download.csv
     ```
-    3. Plot the results:
+
+3. Plot the results:
     ```
     Rscript obfs4-throughput.R download.csv
     ```
 
 Analyze snowflake throughput from pcap files:
-    1. Run the script:
-    2. Plot the results:
+1. Run the script:
+
+2. Plot the results:
     ```
     Rscript snowflake-throughput.R snowflake-throughput.csv
     ```
 
 Analyze snowflake reachability from log files:
-    1. Run the script:
+1. Run the script:
     ```
     find log -name '*.log' | sort | ./snowflake-stage.py > stage.csv
     ```
-    2. Plot the results:
+
+2. Plot the results:
     ```
     Rscript snowflake-stage.R stage.csv
     ```
