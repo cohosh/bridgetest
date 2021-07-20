@@ -16,5 +16,4 @@
           - SITENAME=${SITENAME:?Env var SITENAME is not set.}
         restart: unless-stopped
         volumes:
-          - .:/bridgetest/log
-        entrypoint: ["cron", "-f"]
+          - ./log:/bridgetest/log

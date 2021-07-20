@@ -19,3 +19,8 @@ RUN git clone https://github.com/cohosh/bridgetest.git && \
 
 COPY bridge_lines.txt /bridgetest/
 RUN crontab /bridgetest/docker/probe-crontab
+
+
+COPY ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
