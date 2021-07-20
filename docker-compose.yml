@@ -12,8 +12,9 @@
         image: thetorproject/probetest:latest
         container_name: probe
         environment:
-          # Exit with an error message if OR_PORT is unset or empty.
+          # Exit with an error message if required vars are unset or empty.
           - SITENAME=${SITENAME:?Env var SITENAME is not set.}
+          - UID=${UID:?Env var UID is not set.}
         restart: unless-stopped
         volumes:
           - ./log:/bridgetest/log
