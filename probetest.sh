@@ -30,3 +30,4 @@ esac
 
 tar -czvf log/$CASE/$SITE/$date.tar.gz log/$CASE/$SITE/$date
 rm -rf log/$CASE/$SITE/$date
+chown -R $UID:$UID log/
