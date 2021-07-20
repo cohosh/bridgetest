@@ -11,7 +11,8 @@ if ! [[ "$CASE" =~ ^(obfs4|snowflake)$ ]]; then
 fi
 
 dirname="$PWD"
-logdirname="log/$CASE/$SITE/$(date -u +%Y%m%d-%H%M)"
+date=$(date -u +%Y%m%d-%H%M)
+logdirname="log/$CASE/$SITE/$date"
 mkdir -p "$logdirname"
 cd "$logdirname"
 
@@ -26,3 +27,6 @@ case $CASE in
         "$dirname/snowflaketest"
         ;;
 esac
+
+tar -czvf log/$CASE/$SITE/$date.tar.gz log/$CASE/$SITE/$date
+rm -rf log/$CASE/$SITE/$date
