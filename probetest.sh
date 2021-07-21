@@ -28,6 +28,7 @@ case $CASE in
         ;;
 esac
 
-tar -czvf log/$CASE/$SITE/$date.tar.gz log/$CASE/$SITE/$date
-rm -rf log/$CASE/$SITE/$date
-chown -R $UID:$UID log/
+chown -R $UID:$UID $dirname/log/
+tar -czvf $dirname/log/$CASE/$SITE/$date.tar.gz $dirname/log/$CASE/$SITE/$date
+chown -R $UID:$UID $dirname/log/$CASE/$SITE/$date.tar.gz
+rm -rf $dirname/log/$CASE/$SITE/$date
