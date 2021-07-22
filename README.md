@@ -7,7 +7,15 @@ This is a collection of scripts for performing automatic reachability tests of S
 
 #### Docker
 
-We have a docker image for performing these tests.
+We have a docker image for performing these tests. To run this image, first modify `.env` with your user id number (you can get this by checking `echo $UID`), and a unique name for the site (e.g., a country code).
+
+You can either build the image from scratch, or if you don't, the compose file will pull our pre-built image from docker hub. I recommend this latter option in places where Tor is blocked. It also contains some built-in obfs4 bridge lines selected by us.
+
+Then start the probe by running:
+```
+docker-compose up -d
+```
+The results will appear in the `log/` directory.
 
 #### Manual
 
