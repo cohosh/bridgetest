@@ -131,7 +131,7 @@ with open(bridge_lines_file) as f:
         try:
             logging.info("starting tcpdump for bridge %r" % nickname)
             try:
-                tcpdump_lo_proc = start_tcpdump(nickname, "lo")
+                #tcpdump_lo_proc = start_tcpdump(nickname, "lo")
                 tcpdump_eth0_proc = start_tcpdump(nickname, "eth0")
             except OSError as e:
                 logging.info("failed to start tcpdump, stopping snowflake probe: %s", e)
