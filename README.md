@@ -1,6 +1,6 @@
 # Probetest
 
-This is a collection of scripts for performing automatic reachability tests of Snowflake and obfs4. 
+This is a collection of scripts for performing automatic reachability tests of Snowflake and obfs4.
 
 Datasets from multiple probe points are published by us at: https://people.torproject.org/~cohosh/bootstrap.csv
 
@@ -20,6 +20,13 @@ Then start the probe by running:
 docker-compose up -d
 ```
 The results will appear in the `log/` directory.
+
+##### Docker Build
+
+To build a multi-arch docker image and push it:
+```
+docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -f Dockerfile -t ${TAG_NAME} --push
+```
 
 #### Manual
 
