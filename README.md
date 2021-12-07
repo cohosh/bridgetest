@@ -4,6 +4,8 @@ This is a collection of scripts for performing automatic reachability tests of S
 
 Datasets from multiple probe points are published by us at: https://people.torproject.org/~cohosh/bootstrap.csv
 
+(You may want to run the bootstrap.csv file through the analysis/compare-with-control.pl script, to list only the lines where the bridges are known to be working in our control location.)
+
 ### Setup
 
 
