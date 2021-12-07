@@ -14,9 +14,10 @@ locale.setlocale(locale.LC_ALL, "C")
 bootstrapped_re = re.compile(r'^(\w+ \d+ \d\d:\d\d:\d\d\.\d\d\d) \[\w+\] Bootstrapped (\d+)%')
 
 csvW = csv.DictWriter(sys.stdout, fieldnames=("timestamp", "site", "runid", "nickname", "percent"))
-csvW.writeheader()
+#csvW.writeheader()
 
 def process_log(f, site, runid, nickname):
+    row = None
     for line in f:
         m = bootstrapped_re.match(line)
         if m is not None:
@@ -33,7 +34,7 @@ def process_log(f, site, runid, nickname):
                 "nickname": nickname,
                 "percent": percent,
             }
-            csvW.writerow(row)
+    csvW.writerow(row)
 
 for filename in sys.stdin:
     filename = filename.strip()

@@ -2,6 +2,8 @@
 
 This is a collection of scripts for performing automatic reachability tests of Snowflake and obfs4. 
 
+Datasets from multiple probe points are published by us at: https://people.torproject.org/~cohosh/bootstrap.csv
+
 ### Setup
 
 
