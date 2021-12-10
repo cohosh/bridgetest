@@ -6,9 +6,9 @@ ENV CGO_ENABLED=0
 
 #install snowflake
 RUN git clone https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake.git \
-    && cd snowflake/client && go get -d && go build && mv client /usr/bin/snowflake
+    && cd snowflake/client && go get -d && go build -ldflags="-s -w" && mv client /usr/bin/snowflake
 
-RUN cd /bridgetest/stun-test && go get -d && go build -o stun-test
+RUN cd /bridgetest/stun-test && go get -d && go build -ldflags="-s -w" -o stun-test
 
 FROM debian:bullseye-slim
 
